@@ -9,6 +9,8 @@
 #ifndef KV_H
 #define KV_H
 
+#include <pthread.h>
+#include <stdatomic.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <time.h>
@@ -37,6 +39,40 @@
  *                 thread function.
  */
 
+/* one entry in the hash table (linked list node) */
+struct entry {
+    char key[MAX_KEY_LEN];
+    char val[MAX_VAL_LEN];
+    time_t expire;          /* 0 means never expires (Stage 4) */
+    struct entry *next;
+};
+
+/* the hash table (rwlock added in Stage 3) */
+struct table {
+    struct entry **buckets;
+    int num_buckets;
+    pthread_rwlock_t lock;
+    /* counters for STATS */
+    atomic_long hits;
+    atomic_long misses;
+    atomic_long puts;
+    atomic_long dels;
+    atomic_long keys;
+};
+
+/* bounded queue of client fds (Stage 2 producer/consumer) */
+struct queue {
+    int *fds;
+    int cap;
+    int head;
+    int tail;
+    int count;
+    int shutdown;
+    pthread_mutex_t mutex;
+    pthread_cond_t not_full;
+    pthread_cond_t not_empty;
+};
+
 /* -------- Function prototypes you will likely want ---------------------- */
 
 /* Protocol / connection handling (Stage 1) */
@@ -48,5 +84,13 @@ void handle_client(int conn_fd);        /* loop: read line, parse, reply */
 /* int  kv_get(const char *key, char *out_val, size_t out_cap); */
 /* int  kv_put(const char *key, const char *val, int ttl_seconds); */
 /* int  kv_del(const char *key); */
+
+
+int  kv_get(const char *key, char *out_val, size_t out_cap);
+int  kv_put(const char *key, const char *val, int ttl_seconds);
+int  kv_del(const char *key);
+
+/* Sweeper thread (Stage 4) */
+void *sweeper_thread(void *arg);
 
 #endif /* KV_H */

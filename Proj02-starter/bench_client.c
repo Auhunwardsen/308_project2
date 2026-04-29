@@ -28,6 +28,51 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <time.h>
+
+/* simple struct for threads */
+struct thread_data {
+    const char *host;
+    int port;
+    int ops;
+    int read_pct;
+};
+
+/* thread function */
+void *client_func(void *arg) {
+    struct thread_data *data = (struct thread_data *)arg;
+
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+
+    struct sockaddr_in server;
+    server.sin_family = AF_INET;
+    server.sin_port = htons(data->port);
+    inet_pton(AF_INET, data->host, &server.sin_addr);
+
+    connect(sock, (struct sockaddr*)&server, sizeof(server));
+
+    char buffer[256];
+
+    for (int i = 0; i < data->ops; i++) {
+        int r = rand() % 100;
+
+        if (r < data->read_pct) {
+            snprintf(buffer, sizeof(buffer), "GET key%d\n", rand() % 1000);
+        } else {
+            snprintf(buffer, sizeof(buffer), "PUT key%d val%d\n",
+                     rand() % 1000, rand() % 1000);
+        }
+
+        write(sock, buffer, strlen(buffer));
+        read(sock, buffer, sizeof(buffer)); /* ignore reply */
+    }
+
+    close(sock);
+    return NULL;
+}
 
 static void usage(const char *prog) {
     fprintf(stderr,
@@ -63,6 +108,38 @@ int main(int argc, char **argv) {
      *   4. Compute and print total elapsed time and total ops/sec.
      */
 
-    fprintf(stderr, "bench_client: not implemented yet\n");
+    pthread_t threads[num_clients];
+
+    struct thread_data data;
+    data.host = host;
+    data.port = port;
+    data.ops = ops_per_client;
+    data.read_pct = read_pct;
+
+    struct timespec start, end;
+    clock_gettime(CLOCK_MONOTONIC, &start);
+
+    /* 1. Spawn threads */
+    for (int i = 0; i < num_clients; i++) {
+        pthread_create(&threads[i], NULL, client_func, &data);
+    }
+
+    /* 3. Join threads */
+    for (int i = 0; i < num_clients; i++) {
+        pthread_join(threads[i], NULL);
+    }
+
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
+    /* 4. Compute time and throughput */
+    double total_time =
+        (end.tv_sec - start.tv_sec) +
+        (end.tv_nsec - start.tv_nsec) / 1e9;
+
+    int total_ops = num_clients * ops_per_client;
+
+    fprintf(stderr, "Time: %.2f sec\n", total_time);
+    fprintf(stderr, "Throughput: %.2f ops/sec\n", total_ops / total_time);
+
     return 0;
 }
