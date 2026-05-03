@@ -17,14 +17,14 @@
 
 /* -------- Protocol constants (do NOT change) ---------------------------- */
 
-#define MAX_KEY_LEN    256
-#define MAX_VAL_LEN    256
-#define MAX_LINE_LEN   (MAX_KEY_LEN + MAX_VAL_LEN + 64)  /* + command + ttl */
+#define MAX_KEY_LEN 256
+#define MAX_VAL_LEN 256
+#define MAX_LINE_LEN (MAX_KEY_LEN + MAX_VAL_LEN + 64) /* + command + ttl */
 
 /* Response strings. Each response is one line ending in '\n'. */
-#define RESP_OK        "OK\n"
-#define RESP_BYE       "BYE\n"
-#define RESP_NOTFOUND  "NOT_FOUND\n"
+#define RESP_OK "OK\n"
+#define RESP_BYE "BYE\n"
+#define RESP_NOTFOUND "NOT_FOUND\n"
 
 /* -------- Your types go here -------------------------------------------- */
 
@@ -41,7 +41,8 @@
 
 /* ===== Stage 1: hash table entry ===== */
 /* this is one node in the linked list at each bucket */
-struct entry {
+struct entry
+{
     /* the key string */
     char key[MAX_KEY_LEN];
     /* the value string */
@@ -55,10 +56,10 @@ struct entry {
     struct entry *next;
 };
 
-
 /* ===== Stage 1: the hash table ===== */
 /* Stage 3 added the rwlock so threads dont step on each other */
-struct table {
+struct table
+{
     /* array of bucket pointers (each bucket is a linked list) */
     struct entry **buckets;
     /* how many buckets we have */
@@ -68,18 +69,18 @@ struct table {
     pthread_rwlock_t lock;
 
     /* counters for the STATS command */
-    atomic_long hits;     /* number of successful GETs */
-    atomic_long misses;   /* number of failed GETs */
-    atomic_long puts;     /* number of PUTs */
-    atomic_long dels;     /* number of DELs */
-    atomic_long keys;     /* current number of keys in the table */
+    atomic_long hits;   /* number of successful GETs */
+    atomic_long misses; /* number of failed GETs */
+    atomic_long puts;   /* number of PUTs */
+    atomic_long dels;   /* number of DELs */
+    atomic_long keys;   /* current number of keys in the table */
 };
-
 
 /* ===== Stage 2: bounded work queue ===== */
 /* the acceptor thread puts client fds in here, */
 /* and worker threads take them out to handle */
-struct queue {
+struct queue
+{
     /* the array that holds the client fds */
     int *fds;
     /* total capacity of the fds array */
@@ -104,7 +105,7 @@ struct queue {
 /* -------- Function prototypes you will likely want ---------------------- */
 
 /* Protocol / connection handling (Stage 1) */
-void handle_client(int conn_fd);        /* loop: read line, parse, reply */
+void handle_client(int conn_fd); /* loop: read line, parse, reply */
 
 /* Hash-table operations (Stage 1, made thread-safe in Stage 3) */
 /*   Return 0 on success, -1 on not-found / error. */
@@ -113,10 +114,9 @@ void handle_client(int conn_fd);        /* loop: read line, parse, reply */
 /* int  kv_put(const char *key, const char *val, int ttl_seconds); */
 /* int  kv_del(const char *key); */
 
-
-int  kv_get(const char *key, char *out_val, size_t out_cap);
-int  kv_put(const char *key, const char *val, int ttl_seconds);
-int  kv_del(const char *key);
+int kv_get(const char *key, char *out_val, size_t out_cap);
+int kv_put(const char *key, const char *val, int ttl_seconds);
+int kv_del(const char *key);
 
 /* Sweeper thread (Stage 4) */
 void *sweeper_thread(void *arg);

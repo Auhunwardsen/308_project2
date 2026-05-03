@@ -36,7 +36,8 @@
 /* ===== struct passed to each worker thread ===== */
 /* every thread gets a pointer to one of these so it knows */
 /* where to connect and what work to do */
-struct thread_data {
+struct thread_data
+{
     /* server hostname / IP address */
     const char *host;
     /* server port number */
@@ -47,10 +48,10 @@ struct thread_data {
     int read_pct;
 };
 
-
 /* ===== the function each client thread runs ===== */
 /* it opens one connection and fires off `ops` requests */
-void *client_func(void *arg) {
+void *client_func(void *arg)
+{
     /* cast the void* back to our struct */
     struct thread_data *data = (struct thread_data *)arg;
 
@@ -60,24 +61,28 @@ void *client_func(void *arg) {
     /* --- step 2: fill in the server address --- */
     struct sockaddr_in server;
     server.sin_family = AF_INET;
-    server.sin_port   = htons(data->port);
+    server.sin_port = htons(data->port);
     inet_pton(AF_INET, data->host, &server.sin_addr);
 
     /* --- step 3: connect to the server --- */
-    connect(sock, (struct sockaddr*)&server, sizeof(server));
+    connect(sock, (struct sockaddr *)&server, sizeof(server));
 
     /* buffer used for both sending and receiving */
     char buffer[256];
 
     /* --- step 4: do the operations in a loop --- */
-    for (int i = 0; i < data->ops; i++) {
+    for (int i = 0; i < data->ops; i++)
+    {
         /* roll a number 0..99 to decide GET vs PUT */
         int r = rand() % 100;
 
-        if (r < data->read_pct) {
+        if (r < data->read_pct)
+        {
             /* this op is a GET */
             snprintf(buffer, sizeof(buffer), "GET key%d\n", rand() % 1000);
-        } else {
+        }
+        else
+        {
             /* this op is a PUT */
             snprintf(buffer, sizeof(buffer), "PUT key%d val%d\n",
                      rand() % 1000, rand() % 1000);
@@ -94,31 +99,35 @@ void *client_func(void *arg) {
     return NULL;
 }
 
-static void usage(const char *prog) {
+static void usage(const char *prog)
+{
     fprintf(stderr,
-        "usage: %s <host> <port> <num_clients> <ops_per_client> <read_pct>\n",
-        prog);
+            "usage: %s <host> <port> <num_clients> <ops_per_client> <read_pct>\n",
+            prog);
 }
 
-int main(int argc, char **argv) {
-    if (argc != 6) {
+int main(int argc, char **argv)
+{
+    if (argc != 6)
+    {
         usage(argv[0]);
         return 1;
     }
 
-    const char *host      = argv[1];
-    int port              = atoi(argv[2]);
-    int num_clients       = atoi(argv[3]);
-    int ops_per_client    = atoi(argv[4]);
-    int read_pct          = atoi(argv[5]);
+    const char *host = argv[1];
+    int port = atoi(argv[2]);
+    int num_clients = atoi(argv[3]);
+    int ops_per_client = atoi(argv[4]);
+    int read_pct = atoi(argv[5]);
 
     if (port <= 0 || num_clients < 1 || ops_per_client < 1 ||
-        read_pct < 0 || read_pct > 100) {
+        read_pct < 0 || read_pct > 100)
+    {
         usage(argv[0]);
         return 1;
     }
 
-    (void)host;  /* silence warnings until you implement */
+    (void)host; /* silence warnings until you implement */
 
     /* TODO:
      *   1. Spawn num_clients pthreads.
@@ -135,34 +144,33 @@ int main(int argc, char **argv) {
 
     /* all threads share the same thread_data (read-only for them) */
     struct thread_data data;
-    data.host     = host;
-    data.port     = port;
-    data.ops      = ops_per_client;
+    data.host = host;
+    data.port = port;
+    data.ops = ops_per_client;
     data.read_pct = read_pct;
 
     /* timestamps so we can measure how long the whole run takes */
     struct timespec start, end;
     clock_gettime(CLOCK_MONOTONIC, &start);
 
-    /* ===== 1. Spawn threads ===== */
-    for (int i = 0; i < num_clients; i++) {
+    /* spawn the client threads */
+    for (int i = 0; i < num_clients; i++)
+    {
         pthread_create(&threads[i], NULL, client_func, &data);
     }
 
-    /* ===== 3. Join threads (wait for them all to finish) ===== */
-    for (int i = 0; i < num_clients; i++) {
+    /* wait for them all to finish */
+    for (int i = 0; i < num_clients; i++)
+    {
         pthread_join(threads[i], NULL);
     }
 
     /* stop the timer now that every thread is done */
     clock_gettime(CLOCK_MONOTONIC, &end);
 
-    /* ===== 4. Compute time and throughput ===== */
-
-    /* convert the two timespecs into a single number of seconds */
-    double total_time =
-        (end.tv_sec  - start.tv_sec) +
-        (end.tv_nsec - start.tv_nsec) / 1e9;
+    /* figure out how long it took in seconds */
+    double total_time = (end.tv_sec - start.tv_sec)
+                      + (end.tv_nsec - start.tv_nsec) / 1000000000.0;
 
     /* total ops = clients * ops each */
     int total_ops = num_clients * ops_per_client;
