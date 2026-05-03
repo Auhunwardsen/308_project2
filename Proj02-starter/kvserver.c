@@ -24,8 +24,11 @@
 
 #include "kv.h"
 
-/* -------- Globals ------------------------------------------------------- */
+/* ======================================================================
+ * Globals
+ * ====================================================================== */
 
+/* set to 1 when the user hits Ctrl-C, so all loops can exit cleanly */
 static volatile sig_atomic_t g_shutdown = 0;
 
 static void sigint_handler(int sig) {
@@ -33,15 +36,18 @@ static void sigint_handler(int sig) {
     g_shutdown = 1;
 }
 
-/* the one big hash table and the work queue used by all threads */
+/* the hash table (Stage 1) and the work queue (Stage 2), shared by all threads */
 static struct table g_table;
 static struct queue g_queue;
 
-/* used by STATS */
-static time_t      g_start_time;
-static atomic_long g_active_conns;
+/* extra bookkeeping used by the STATS command */
+static time_t      g_start_time;     /* when the server started up */
+static atomic_long g_active_conns;   /* how many clients are connected right now */
 
-/* -------- Hash table (Stage 1, made thread-safe in Stage 3) ------------- */
+/* ======================================================================
+ * Stage 1: Hash table  (Stage 3 added the rwlock for thread-safety,
+ *                       Stage 4 added the expiration check)
+ * ====================================================================== */
 
 /* simple djb2 hash function */
 static unsigned int hash_str(const char *s) {
@@ -183,7 +189,13 @@ int kv_del(const char *key) {
     return -1;
 }
 
-/* -------- Work queue (Stage 2) ----------------------------------------- */
+/* ======================================================================
+ * Stage 2: Bounded work queue (producer / consumer)
+ *
+ * The main thread is the producer (it accepts new clients and pushes
+ * their fds in here). Worker threads are consumers -- they pull fds
+ * out and run handle_client() on them.
+ * ====================================================================== */
 
 static void queue_init(int cap) {
     g_queue.fds = malloc(cap * sizeof(int));
@@ -256,7 +268,9 @@ static void queue_stop(void) {
     pthread_mutex_unlock(&g_queue.mutex);
 }
 
-/* -------- Socket helpers ------------------------------------------------ */
+/* ======================================================================
+ * Stage 1: Socket helpers
+ * ====================================================================== */
 
 /* Create a listening TCP socket bound to the given port. Returns fd or -1. */
 static int make_listen_socket(int port) {
@@ -290,7 +304,9 @@ static int make_listen_socket(int port) {
     return fd;
 }
 
-/* -------- Protocol / connection handling (Stage 1) ---------------------- */
+/* ======================================================================
+ * Stage 1: Protocol / connection handling
+ * ====================================================================== */
 
 /* read one line from the socket (up to '\n'). returns length, or -1 on EOF/err */
 static int read_line(int fd, char *buf, int cap) {
@@ -322,8 +338,10 @@ void handle_client(int conn_fd) {
     char val[MAX_VAL_LEN];
 
     while (!g_shutdown) {
+        /* read one command line, stop if the client disconnected */
         if (read_line(conn_fd, line, sizeof(line)) < 0) break;
 
+        /* ---- GET <key> ---- */
         if (strncmp(line, "GET ", 4) == 0) {
             if (sscanf(line + 4, "%255s", key) != 1) {
                 dprintf(conn_fd, "ERROR bad GET\n");
@@ -336,17 +354,19 @@ void handle_client(int conn_fd) {
                 }
             }
         }
+        /* ---- PUT <key> <val> [ttl] ---- */
         else if (strncmp(line, "PUT ", 4) == 0) {
             int ttl = 0;
             int n = sscanf(line + 4, "%255s %255s %d", key, val, &ttl);
             if (n < 2) {
                 dprintf(conn_fd, "ERROR bad PUT\n");
             } else {
-                if (n == 2) ttl = 0;
+                if (n == 2) ttl = 0;     /* no ttl given -> never expire */
                 kv_put(key, val, ttl);
                 dprintf(conn_fd, RESP_OK);
             }
         }
+        /* ---- DEL <key> ---- */
         else if (strncmp(line, "DEL ", 4) == 0) {
             if (sscanf(line + 4, "%255s", key) != 1) {
                 dprintf(conn_fd, "ERROR bad DEL\n");
@@ -358,6 +378,7 @@ void handle_client(int conn_fd) {
                 }
             }
         }
+        /* ---- STATS ---- */
         else if (strcmp(line, "STATS") == 0) {
             dprintf(conn_fd,
                 "STATS keys=%ld hits=%ld misses=%ld puts=%ld dels=%ld"
@@ -370,10 +391,12 @@ void handle_client(int conn_fd) {
                 atomic_load(&g_active_conns),
                 (long)(time(NULL) - g_start_time));
         }
+        /* ---- QUIT ---- */
         else if (strcmp(line, "QUIT") == 0) {
             dprintf(conn_fd, RESP_BYE);
             break;
         }
+        /* ---- anything else ---- */
         else if (line[0] != '\0') {
             dprintf(conn_fd, "ERROR unknown command\n");
         }
@@ -383,17 +406,58 @@ void handle_client(int conn_fd) {
     atomic_fetch_sub(&g_active_conns, 1);
 }
 
-/* -------- Worker and sweeper threads (Stages 2 and 4) ------------------- */
+/* ======================================================================
+ * Stage 2: Worker threads
+ * ====================================================================== */
 
 /* worker thread: keep grabbing clients from the queue and serving them */
 static void *worker_thread(void *arg) {
     (void)arg;
     while (1) {
         int fd = queue_get();
-        if (fd < 0) break;   /* shutdown */
+        if (fd < 0) break;   /* queue was shut down */
         handle_client(fd);
     }
     return NULL;
+}
+
+/* ======================================================================
+ * Stage 4: Sweeper thread (background cleanup of expired keys)
+ * ====================================================================== */
+
+/* sleep for `ms` milliseconds, but wake every 50ms to peek at g_shutdown */
+/* so the thread can quit fast when the user hits Ctrl-C */
+static void sleep_ms_chunked(int ms) {
+    while (ms > 0 && !g_shutdown) {
+        int chunk = (ms < 50) ? ms : 50;
+        struct timespec ts = { 0, chunk * 1000000L };
+        nanosleep(&ts, NULL);
+        ms -= chunk;
+    }
+}
+
+/* walk one bucket and drop any entry whose expire time has passed */
+static void sweep_bucket(int i, time_t now) {
+    pthread_rwlock_wrlock(&g_table.lock);
+
+    struct entry *prev = NULL;
+    struct entry *e = g_table.buckets[i];
+    while (e != NULL) {
+        if (e->expire != 0 && now >= e->expire) {
+            /* unlink this entry from the chain and free it */
+            struct entry *dead = e;
+            if (prev == NULL) g_table.buckets[i] = e->next;
+            else              prev->next         = e->next;
+            e = e->next;
+            free(dead);
+            atomic_fetch_sub(&g_table.keys, 1);
+        } else {
+            prev = e;
+            e = e->next;
+        }
+    }
+
+    pthread_rwlock_unlock(&g_table.lock);
 }
 
 /* background sweeper: every so often, walk the table and remove expired keys */
@@ -401,51 +465,22 @@ void *sweeper_thread(void *arg) {
     int sleep_ms = *(int *)arg;
 
     while (!g_shutdown) {
-        /* sleep in small chunks so shutdown can stop us quickly */
-        int left = sleep_ms;
-        while (left > 0 && !g_shutdown) {
-            int chunk = 50;
-            if (left < chunk) chunk = left;
-            struct timespec ts;
-            ts.tv_sec = 0;
-            ts.tv_nsec = chunk * 1000000L;
-            nanosleep(&ts, NULL);
-            left -= chunk;
-        }
+        /* 1. wait for the next sweep tick */
+        sleep_ms_chunked(sleep_ms);
         if (g_shutdown) break;
 
+        /* 2. sweep all buckets (one at a time so readers arent blocked long) */
         time_t now = time(NULL);
-
-        /* sweep one bucket at a time so we don't block readers for too long */
         for (int i = 0; i < g_table.num_buckets && !g_shutdown; i++) {
-            pthread_rwlock_wrlock(&g_table.lock);
-
-            struct entry *prev = NULL;
-            struct entry *e = g_table.buckets[i];
-            while (e != NULL) {
-                if (e->expire != 0 && now >= e->expire) {
-                    struct entry *dead = e;
-                    if (prev == NULL) {
-                        g_table.buckets[i] = e->next;
-                    } else {
-                        prev->next = e->next;
-                    }
-                    e = e->next;
-                    free(dead);
-                    atomic_fetch_sub(&g_table.keys, 1);
-                } else {
-                    prev = e;
-                    e = e->next;
-                }
-            }
-
-            pthread_rwlock_unlock(&g_table.lock);
+            sweep_bucket(i, now);
         }
     }
     return NULL;
 }
 
-/* -------- Entry point --------------------------------------------------- */
+/* ======================================================================
+ * Entry point: main()
+ * ====================================================================== */
 
 static void usage(const char *prog) {
     fprintf(stderr,
@@ -458,6 +493,7 @@ static void usage(const char *prog) {
 }
 
 int main(int argc, char **argv) {
+    /* ---- 0. parse and validate command-line args ---- */
     if (argc < 4 || argc > 5) {
         usage(argv[0]);
         return 1;
@@ -473,7 +509,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    /* Install Ctrl-C handler for clean shutdown. */
+    /* ---- 1. install signal handlers for clean shutdown ---- */
     struct sigaction sa;
     memset(&sa, 0, sizeof(sa));
     sa.sa_handler = sigint_handler;
@@ -484,6 +520,7 @@ int main(int argc, char **argv) {
      * kill the server. */
     signal(SIGPIPE, SIG_IGN);
 
+    /* ---- 2. open the listening socket (Stage 1) ---- */
     int listen_fd = make_listen_socket(port);
     if (listen_fd < 0) return 1;
 
@@ -513,37 +550,34 @@ int main(int argc, char **argv) {
      * TODO (shutdown): drain queue, join all threads, free everything.
      * ================================================================ */
 
-    /* Stage 3: init the table (also creates its rwlock). */
-    table_init(num_buckets);
-
-    /* Stage 2: init the work queue. */
-    queue_init(num_workers * 2);
-
+    /* ---- 3. init shared state (Stages 1, 2, 3) ---- */
+    table_init(num_buckets);             /* Stage 1 + Stage 3 (rwlock) */
+    queue_init(num_workers * 2);         /* Stage 2 */
     atomic_init(&g_active_conns, 0);
     g_start_time = time(NULL);
 
-    /* Stage 2: spawn worker threads. */
+    /* ---- 4. spawn worker threads (Stage 2) ---- */
     pthread_t *workers = malloc(num_workers * sizeof(pthread_t));
     for (int i = 0; i < num_workers; i++) {
         pthread_create(&workers[i], NULL, worker_thread, NULL);
     }
 
-    /* Stage 4: spawn sweeper thread. */
+    /* ---- 5. spawn the sweeper thread (Stage 4) ---- */
     pthread_t sweeper;
     pthread_create(&sweeper, NULL, sweeper_thread, &sweeper_ms);
 
-    /* main thread: accept new clients and put them on the queue */
+    /* ---- 6. accept loop: hand new clients off to the workers ---- */
     while (!g_shutdown) {
         int conn = accept(listen_fd, NULL, NULL);
         if (conn < 0) {
-            if (errno == EINTR) continue;
+            if (errno == EINTR) continue;       /* signal, just retry */
             if (!g_shutdown) perror("accept");
             break;
         }
         queue_put(conn);
     }
 
-    /* shutdown: stop the queue, wait for workers, then clean up */
+    /* ---- 7. shutdown: stop queue, join threads, free everything ---- */
     queue_stop();
     for (int i = 0; i < num_workers; i++) {
         pthread_join(workers[i], NULL);

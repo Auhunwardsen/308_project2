@@ -33,43 +33,63 @@
 #include <arpa/inet.h>
 #include <time.h>
 
-/* simple struct for threads */
+/* ===== struct passed to each worker thread ===== */
+/* every thread gets a pointer to one of these so it knows */
+/* where to connect and what work to do */
 struct thread_data {
+    /* server hostname / IP address */
     const char *host;
+    /* server port number */
     int port;
+    /* how many operations this thread should run */
     int ops;
+    /* percent of operations that should be GETs (the rest are PUTs) */
     int read_pct;
 };
 
-/* thread function */
+
+/* ===== the function each client thread runs ===== */
+/* it opens one connection and fires off `ops` requests */
 void *client_func(void *arg) {
+    /* cast the void* back to our struct */
     struct thread_data *data = (struct thread_data *)arg;
 
+    /* --- step 1: make a TCP socket --- */
     int sock = socket(AF_INET, SOCK_STREAM, 0);
 
+    /* --- step 2: fill in the server address --- */
     struct sockaddr_in server;
     server.sin_family = AF_INET;
-    server.sin_port = htons(data->port);
+    server.sin_port   = htons(data->port);
     inet_pton(AF_INET, data->host, &server.sin_addr);
 
+    /* --- step 3: connect to the server --- */
     connect(sock, (struct sockaddr*)&server, sizeof(server));
 
+    /* buffer used for both sending and receiving */
     char buffer[256];
 
+    /* --- step 4: do the operations in a loop --- */
     for (int i = 0; i < data->ops; i++) {
+        /* roll a number 0..99 to decide GET vs PUT */
         int r = rand() % 100;
 
         if (r < data->read_pct) {
+            /* this op is a GET */
             snprintf(buffer, sizeof(buffer), "GET key%d\n", rand() % 1000);
         } else {
+            /* this op is a PUT */
             snprintf(buffer, sizeof(buffer), "PUT key%d val%d\n",
                      rand() % 1000, rand() % 1000);
         }
 
+        /* send the command to the server */
         write(sock, buffer, strlen(buffer));
+        /* read the reply back (we dont actually use it) */
         read(sock, buffer, sizeof(buffer)); /* ignore reply */
     }
 
+    /* --- step 5: clean up --- */
     close(sock);
     return NULL;
 }
@@ -108,36 +128,46 @@ int main(int argc, char **argv) {
      *   4. Compute and print total elapsed time and total ops/sec.
      */
 
+    /* ===== set up threads and shared data ===== */
+
+    /* one pthread_t per client thread */
     pthread_t threads[num_clients];
 
+    /* all threads share the same thread_data (read-only for them) */
     struct thread_data data;
-    data.host = host;
-    data.port = port;
-    data.ops = ops_per_client;
+    data.host     = host;
+    data.port     = port;
+    data.ops      = ops_per_client;
     data.read_pct = read_pct;
 
+    /* timestamps so we can measure how long the whole run takes */
     struct timespec start, end;
     clock_gettime(CLOCK_MONOTONIC, &start);
 
-    /* 1. Spawn threads */
+    /* ===== 1. Spawn threads ===== */
     for (int i = 0; i < num_clients; i++) {
         pthread_create(&threads[i], NULL, client_func, &data);
     }
 
-    /* 3. Join threads */
+    /* ===== 3. Join threads (wait for them all to finish) ===== */
     for (int i = 0; i < num_clients; i++) {
         pthread_join(threads[i], NULL);
     }
 
+    /* stop the timer now that every thread is done */
     clock_gettime(CLOCK_MONOTONIC, &end);
 
-    /* 4. Compute time and throughput */
+    /* ===== 4. Compute time and throughput ===== */
+
+    /* convert the two timespecs into a single number of seconds */
     double total_time =
-        (end.tv_sec - start.tv_sec) +
+        (end.tv_sec  - start.tv_sec) +
         (end.tv_nsec - start.tv_nsec) / 1e9;
 
+    /* total ops = clients * ops each */
     int total_ops = num_clients * ops_per_client;
 
+    /* print the results */
     fprintf(stderr, "Time: %.2f sec\n", total_time);
     fprintf(stderr, "Throughput: %.2f ops/sec\n", total_ops / total_time);
 

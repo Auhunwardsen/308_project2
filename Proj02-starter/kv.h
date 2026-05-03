@@ -39,37 +39,65 @@
  *                 thread function.
  */
 
-/* one entry in the hash table (linked list node) */
+/* ===== Stage 1: hash table entry ===== */
+/* this is one node in the linked list at each bucket */
 struct entry {
+    /* the key string */
     char key[MAX_KEY_LEN];
+    /* the value string */
     char val[MAX_VAL_LEN];
-    time_t expire;          /* 0 means never expires (Stage 4) */
+
+    /* Stage 4: when does this entry expire? */
+    /* 0 means it never expires */
+    time_t expire;
+
+    /* pointer to next entry in the bucket (linked list) */
     struct entry *next;
 };
 
-/* the hash table (rwlock added in Stage 3) */
+
+/* ===== Stage 1: the hash table ===== */
+/* Stage 3 added the rwlock so threads dont step on each other */
 struct table {
+    /* array of bucket pointers (each bucket is a linked list) */
     struct entry **buckets;
+    /* how many buckets we have */
     int num_buckets;
+
+    /* Stage 3: reader/writer lock for thread-safety */
     pthread_rwlock_t lock;
-    /* counters for STATS */
-    atomic_long hits;
-    atomic_long misses;
-    atomic_long puts;
-    atomic_long dels;
-    atomic_long keys;
+
+    /* counters for the STATS command */
+    atomic_long hits;     /* number of successful GETs */
+    atomic_long misses;   /* number of failed GETs */
+    atomic_long puts;     /* number of PUTs */
+    atomic_long dels;     /* number of DELs */
+    atomic_long keys;     /* current number of keys in the table */
 };
 
-/* bounded queue of client fds (Stage 2 producer/consumer) */
+
+/* ===== Stage 2: bounded work queue ===== */
+/* the acceptor thread puts client fds in here, */
+/* and worker threads take them out to handle */
 struct queue {
+    /* the array that holds the client fds */
     int *fds;
+    /* total capacity of the fds array */
     int cap;
+    /* index where we take the next fd from */
     int head;
+    /* index where we put the next fd */
     int tail;
+    /* how many fds are currently sitting in the queue */
     int count;
+    /* set to 1 when the server is shutting down */
     int shutdown;
+
+    /* lock to protect all the fields above */
     pthread_mutex_t mutex;
+    /* signaled when there is room to add another fd */
     pthread_cond_t not_full;
+    /* signaled when there is at least one fd available to take */
     pthread_cond_t not_empty;
 };
 
