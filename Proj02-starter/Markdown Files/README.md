@@ -45,10 +45,10 @@ For benchmarks see BENCHMARK.md.
 ## Design stuff
 
 ### Lock granularity
-I just used one rwlock for the whole table. <Fill in: why I did this and not per-bucket.>
+I used one rwlock for the whole table. GETs take it as a read lock so many can run at the same time, PUT/DEL take it as a write lock so only one can run. Per-bucket locks would let writes on different buckets go in parallel, but they also add a lot of complexity. Since the benchmark is 90% reads, one rwlock was enough -- 1 to 4 clients scaled almost linearly (about 4.2x), which means reads were not blocking each other.
 
 ### Worker pool size
-<Fill in: how many workers helped before it stopped going faster.>
+I ran the server with 8 workers. Throughput grew with more clients up to 16 (256k ops/sec) but dropped at 64 (193k). Adding workers helps until you have about one worker per CPU core. Past that, extra clients just sit in the queue and the writer lock from PUTs gets hit more often.
 
 ### Sweeper
-The sweeper takes the write lock one bucket at a time instead of locking the whole table at once. <Fill in: why, and how GET still works right.>
+The sweeper takes the write lock one bucket at a time instead of the whole table. If it held the lock across the whole scan, every GET would freeze until the sweep finished. Per-bucket locking means only the bucket being swept is blocked. GETs are still safe because they use a read lock and the sweeper uses a write lock -- they cannot run on the same bucket at the same time. As a backup, `kv_get` also checks the expire time itself, so an expired key returns NOT_FOUND even before the sweeper deletes it.

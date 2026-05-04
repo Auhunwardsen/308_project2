@@ -19,14 +19,26 @@ make all bench
 
 Terminal 1 (server, leave running):
 ```
-./kvserver 9000 8 1024 500 2>&1 | tee logs/server.txt
+./kvserver 9000 8 1024 500 2>&1 | tee logs/server_$(date +%s).txt
 ```
 Expect: `kvserver: listening on port 9000 (workers=8, buckets=1024, sweeper=500ms)`
 
-Terminal 2 (benchmark sweep):
+Terminal 2 (client sweep -- 1/4/16/64 clients, fixed 8 workers):
 ```
+TS=$(date +%s)
 for c in 1 4 16 64; do
-  ./bench_client 127.0.0.1 9000 $c 10000 90 2>&1 | tee logs/bench_c${c}.txt
+  ./bench_client 127.0.0.1 9000 $c 10000 90 2>&1 | tee logs/bench_c${c}_${TS}.txt
+done
+```
+
+Terminal 2 (worker sweep -- 2/4/8/16 workers, fixed 16 clients; starts/stops server itself):
+```
+TS=$(date +%s)
+for w in 2 4 8 16; do
+  ./kvserver 9000 $w 1024 500 >/dev/null 2>&1 &
+  PID=$!; sleep 0.5
+  ./bench_client 127.0.0.1 9000 16 10000 90 2>&1 | tee logs/workers_w${w}_${TS}.txt
+  kill $PID; wait $PID 2>/dev/null
 done
 ```
 
