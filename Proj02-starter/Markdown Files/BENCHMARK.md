@@ -21,9 +21,17 @@ make all bench
 
 ## Save output (one file per run)
 
+Terminal 1 (server, leave running):
+```
+./kvserver 9000 8 1024 | tee server_$(date +%s).log
+```
+
+Terminal 2 (benchmark):
 ```
 ./bench_client 127.0.0.1 9000 16 10000 90 | tee bench_$(date +%s).log
 ```
+
+Ctrl-C in terminal 1 when done.
 
 ## Results -- Throughput vs. concurrency (90% read / 10% write)
 
