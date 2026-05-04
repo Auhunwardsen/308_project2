@@ -100,6 +100,30 @@ static void *worker_thread(void *arg)
     return NULL;
 }
 
+
+
+
+/* ================================================================
+* TODO (Stage 1): Sequential accept loop.
+*   while (!g_shutdown) {
+*       int conn = accept(listen_fd, NULL, NULL);
+*       if (conn < 0) { ...handle EINTR on signal, else perror... }
+*       handle_client(conn);
+*       close(conn);
+*   }
+*
+* TODO (Stage 2): Initialize work queue + spawn worker threads.
+*                 The accept loop now enqueues conn fds instead of
+*                 calling handle_client directly.
+*
+* TODO (Stage 3): Initialize the hash table's rwlock before the accept
+*                 loop starts.
+*
+* TODO (Stage 4): Spawn the sweeper thread; join it on shutdown.
+*
+* TODO (shutdown): drain queue, join all threads, free everything.
+* ================================================================ */
+
 /* ======================================================================
  * Entry point: main()
  * ====================================================================== */
@@ -156,26 +180,6 @@ int main(int argc, char **argv)
             "(workers=%d, buckets=%d, sweeper=%dms)\n",
             port, num_workers, num_buckets, sweeper_ms);
 
-    /* ================================================================
-     * TODO (Stage 1): Sequential accept loop.
-     *   while (!g_shutdown) {
-     *       int conn = accept(listen_fd, NULL, NULL);
-     *       if (conn < 0) { ...handle EINTR on signal, else perror... }
-     *       handle_client(conn);
-     *       close(conn);
-     *   }
-     *
-     * TODO (Stage 2): Initialize work queue + spawn worker threads.
-     *                 The accept loop now enqueues conn fds instead of
-     *                 calling handle_client directly.
-     *
-     * TODO (Stage 3): Initialize the hash table's rwlock before the accept
-     *                 loop starts.
-     *
-     * TODO (Stage 4): Spawn the sweeper thread; join it on shutdown.
-     *
-     * TODO (shutdown): drain queue, join all threads, free everything.
-     * ================================================================ */
 
     /* ---- 3. init shared state (Stages 1, 2, 3) ---- */
     table_init(num_buckets);     /* Stage 1 + Stage 3 (rwlock) */
