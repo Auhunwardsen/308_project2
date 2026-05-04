@@ -19,52 +19,35 @@ make all bench
 ./bench_client 127.0.0.1 9000 64 10000 90
 ```
 
-## Save output (one file per run)
+## Run the benchmark
 
-Terminal 1 (server, leave running):
+Terminal 1 -- start the server, leave it running:
 ```
-./kvserver 9000 8 1024 500 | tee server_$(date +%s).log
-```
-
-Terminal 2 -- Stage 1 (basic protocol):
-```
-( printf 'PUT color red\nPUT temp 72 5\nGET color\nGET missing\nSTATS\nQUIT\n'; sleep 1 ) \
-  | nc localhost 9000 | tee stage1_$(date +%s).log
+./kvserver 9000 8 1024 500
 ```
 
-Terminal 2 -- Stage 2 (many concurrent clients):
+You should see a line like:
 ```
-for i in $(seq 1 20); do
-  printf "PUT k$i v$i\nGET k$i\nQUIT\n" | nc localhost 9000 &
-done; wait
-printf 'STATS\nQUIT\n' | nc localhost 9000 | tee stage2_$(date +%s).log
+kvserver: listening on port 9000 (workers=8, buckets=1024, sweeper=500ms)
 ```
+If you don't see that, the server didn't start -- check the port isn't in use.
 
-Terminal 2 -- Stage 3 (RW correctness under load):
+Quick sanity check (terminal 2) before running the benchmark:
 ```
-./bench_client 127.0.0.1 9000 16 10000 50 | tee stage3_$(date +%s).log
+printf 'PUT k v\nGET k\nQUIT\n' | nc -q 1 localhost 9000
 ```
+Expected: `OK`, `VALUE v`, `BYE`. If that works, the server is up and the protocol is fine.
 
-Terminal 2 -- Stage 4 (TTL expiry):
-```
-( printf 'PUT x hello 2\n'; sleep 3; printf 'GET x\nSTATS\nQUIT\n' ) \
-  | nc localhost 9000 | tee stage4_$(date +%s).log
-```
-
-Terminal 2 -- benchmark sweep (the table below):
+Terminal 2 -- run the four benchmark cases and save each to its own file:
 ```
 for c in 1 4 16 64; do
-  ./bench_client 127.0.0.1 9000 $c 10000 90 | tee bench_c${c}_$(date +%s).log
+  ./bench_client 127.0.0.1 9000 $c 10000 90 | tee bench_c${c}.txt
 done
 ```
 
-Terminal 2 -- memory check (valgrind, from spec):
-```
-valgrind --leak-check=full --show-leak-kinds=all ./kvserver 9000 4 128 2>&1 \
-  | tee valgrind_$(date +%s).log
-```
+Each run prints wall-clock time and ops/sec -- those are the numbers for the table below.
 
-Ctrl-C in terminal 1 when done.
+Ctrl-C terminal 1 when done.
 
 ## Results -- Throughput vs. concurrency (90% read / 10% write)
 
