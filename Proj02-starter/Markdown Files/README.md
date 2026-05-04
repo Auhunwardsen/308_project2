@@ -23,6 +23,17 @@ There is an optional 4th arg for the sweeper interval in ms (default 500).
 
 Press Ctrl-C to stop the server.
 
+## How to test
+
+With the server running on port 9000 in another terminal:
+
+```
+./test_client.sh 9000          # smoke test (PUT/GET/DEL/STATS/TTL)
+./test_stages.sh 9000          # stage 1-4 tests (errors, parallel, contention, sweeper)
+```
+
+For benchmarks see BENCHMARK.md.
+
 ## What works
 
 - Stage 1 (basic server, GET/PUT/DEL/STATS/QUIT) - done

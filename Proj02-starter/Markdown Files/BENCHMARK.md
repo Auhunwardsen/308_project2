@@ -8,68 +8,37 @@
 - Client: `./bench_client 127.0.0.1 9000 <num_clients> 10000 90`
 - Workload: 90% GET / 10% PUT, 10,000 ops per client, ~1000-key pool
 
-## How to reproduce
+## How to run
 
+Build:
 ```
 make all bench
-./kvserver 9000 8 1024 500 &
-./bench_client 127.0.0.1 9000 1  10000 90
-./bench_client 127.0.0.1 9000 4  10000 90
-./bench_client 127.0.0.1 9000 16 10000 90
-./bench_client 127.0.0.1 9000 64 10000 90
 ```
 
-## Run the benchmark
-
-Make the logs folder once:
-```
-mkdir -p logs
-```
-
-Terminal 1 -- start the server, leave it running:
+Terminal 1 (server, leave running):
 ```
 ./kvserver 9000 8 1024 500 2>&1 | tee logs/server.txt
 ```
+Expect: `kvserver: listening on port 9000 (workers=8, buckets=1024, sweeper=500ms)`
 
-You should see a line like:
-```
-kvserver: listening on port 9000 (workers=8, buckets=1024, sweeper=500ms)
-```
-If you don't see that, the server didn't start -- check the port isn't in use.
-
-Quick sanity check (terminal 2) before running the benchmark:
-```
-printf 'PUT k v\nGET k\nQUIT\n' | nc -q 1 localhost 9000
-```
-Expected: `OK`, `VALUE v`, `BYE`. If that works, the server is up and the protocol is fine.
-
-Terminal 2 -- run the four benchmark cases and save each to its own file:
+Terminal 2 (benchmark sweep):
 ```
 for c in 1 4 16 64; do
   ./bench_client 127.0.0.1 9000 $c 10000 90 2>&1 | tee logs/bench_c${c}.txt
 done
 ```
 
-Each run prints wall-clock time and ops/sec -- those are the numbers for the table below.
-
-Ctrl-C terminal 1 when done.
+Each run prints wall time and ops/sec -- fills the table below. Ctrl-C terminal 1 when done.
 
 ## Results -- Throughput vs. concurrency (90% read / 10% write)
 
 | Clients | Total ops | Wall time (s) | Throughput (ops/sec) |
 | ------- | --------- | ------------- | -------------------- |
-| 1       | 10,000    |               |                      |
-| 4       | 40,000    |               |                      |
-| 16      | 160,000   |               |                      |
-| 64      | 640,000   |               |                      |
+| 1       | 10,000    | 0.28          | 35,728               |
+| 4       | 40,000    | 0.27          | 149,686              |
+| 16      | 160,000   | 0.62          | 256,102              |
+| 64      | 640,000   | 3.31          | 193,261              |
 
-## Analysis (3-5 sentences)
+## Analysis
 
-<Fill in:
- - Does throughput scale linearly from 1 -> 4 -> 16 clients?
- - Where does it plateau, and roughly by what factor?
- - Best guess at the bottleneck at the plateau: CPU saturation, RW-lock writer
-   contention with 10% PUTs, accept loop / queue, syscall overhead, or
-   network-loopback bandwidth?
- - Does the curve match what you'd expect for a single table-wide RW lock at
-   90% reads?>
+Throughput scales nearly linearly from 1 to 4 clients (~4.2x). It keeps climbing through 16 clients but only by ~1.7x, then drops at 64. The plateau and regression line up with two effects: writer contention on the single table-wide rwlock from the 10% PUTs, and the worker pool (8) being heavily oversubscribed once client count is much larger. At 90% reads the curve is what you'd expect from one rwlock -- reads parallelize well, writes serialize the whole table.
