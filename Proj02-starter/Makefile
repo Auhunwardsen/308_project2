@@ -8,12 +8,13 @@
 #   make tsan        build with ThreadSanitizer (Stage 3+ debugging)
 
 CC      = gcc
-CFLAGS  = -Wall -Wextra -Wpedantic -std=c11 -O2 -g -pthread
+CFLAGS  = -Wall -Wextra -Wpedantic -std=c11 -O2 -g -pthread -D_GNU_SOURCE
 LDFLAGS = -pthread
 
 SERVER_SRCS = kvserver.c
 #   Add your own source files here as you create them, e.g.:
 #   SERVER_SRCS += table.c queue.c protocol.c sweeper.c
+SERVER_SRCS += table.c queue.c protocol.c sweeper.c
 
 BENCH_SRCS  = bench_client.c
 

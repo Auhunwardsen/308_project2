@@ -10,6 +10,7 @@
 #define KV_H
 
 #include <pthread.h>
+#include <signal.h>
 #include <stdatomic.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -104,6 +105,19 @@ struct queue
 
 /* -------- Function prototypes you will likely want ---------------------- */
 
+/* -------- Globals shared across translation units ----------------------- */
+
+/* set to 1 when the user hits Ctrl-C, so all loops can exit cleanly */
+extern volatile sig_atomic_t g_shutdown;
+
+/* the hash table (Stage 1) and the work queue (Stage 2), shared by all threads */
+extern struct table g_table;
+extern struct queue g_queue;
+
+/* extra bookkeeping used by the STATS command */
+extern time_t g_start_time;        /* when the server started up */
+extern atomic_long g_active_conns; /* how many clients are connected right now */
+
 /* Protocol / connection handling (Stage 1) */
 void handle_client(int conn_fd); /* loop: read line, parse, reply */
 
@@ -117,6 +131,17 @@ void handle_client(int conn_fd); /* loop: read line, parse, reply */
 int kv_get(const char *key, char *out_val, size_t out_cap);
 int kv_put(const char *key, const char *val, int ttl_seconds);
 int kv_del(const char *key);
+
+/* Stage 1 + Stage 3: table lifecycle */
+void table_init(int n);
+void table_destroy(void);
+
+/* Stage 2: bounded work queue */
+void queue_init(int cap);
+void queue_destroy(void);
+void queue_put(int fd);
+int  queue_get(void);
+void queue_stop(void);
 
 /* Sweeper thread (Stage 4) */
 void *sweeper_thread(void *arg);
