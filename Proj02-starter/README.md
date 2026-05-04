@@ -6,7 +6,7 @@ My project 2 for CprE 3080. Its a key-value store that runs over TCP.
 
 Just run `make` in this folder.
 
-For the benchmark client too: `make bench`
+For the benchmark client too: `make bench or make all bench`
 
 ## How to run
 
