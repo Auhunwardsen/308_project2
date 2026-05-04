@@ -76,3 +76,16 @@ done
 ## Analysis
 
 Going from 1 to 4 clients was almost 4x faster which I think makes sense because reads can happen at the same time. From 4 to 16 it kept going up but not as much. From 16 to 64 it basically stopped getting faster. I think this is because the PUT lock has to be by itself, so once enough clients are pushing PUTs the lock is busy a lot. The worker sweep shows about the same number (~185-205k) no matter how many workers I used, so the workers are not the slow part -- the lock is.
+
+
+
+## DEMO QUICK COMMANDS
+
+Per spec: "start it, show concurrent clients, show STATS, show TTL expiry."
+
+1. `make all bench`
+2. Terminal 1: `./kvserver 9000 8 1024 500`
+3. Terminal 2: `./test_client.sh 9000` -- shows PUT/GET/DEL/STATS/TTL.
+4. Terminal 2: `./test_stages.sh 9000` -- shows parallel clients (Stage 2), shared-key contention (Stage 3), TTL sweeper (Stage 4 -- watch keys go from 1043 down to 1023 after the 3s sleep).
+5. Terminal 2: `./bench_client 127.0.0.1 9000 16 10000 90` -- shows the throughput number from BENCHMARK.md.
+6. Ctrl-C -- clean shutdown.
