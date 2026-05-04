@@ -81,7 +81,7 @@ Going from 1 to 4 clients was almost 4x faster which I think makes sense because
 
 ## DEMO QUICK COMMANDS
 
-Per spec: "start it, show concurrent clients, show STATS, show TTL expiry."
+Per doc: "start it, show concurrent clients, show STATS, show TTL expiry."
 
 1. `make all bench`
 2. Terminal 1: `./kvserver 9000 8 1024 500`
