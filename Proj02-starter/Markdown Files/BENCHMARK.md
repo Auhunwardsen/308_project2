@@ -2,7 +2,7 @@
 
 ## Setup
 
-- Machine: <CPU model, cores, RAM, OS / kernel>
+- Machine: <Lab machine>
 - Compiler: gcc, `-Wall -Wextra -pthread -O2`
 - Server: `./kvserver 9000 8 1024 500`
 - Client: `./bench_client 127.0.0.1 9000 <num_clients> 10000 90`
