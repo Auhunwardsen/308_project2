@@ -21,9 +21,14 @@ make all bench
 
 ## Run the benchmark
 
+Make the logs folder once:
+```
+mkdir -p logs
+```
+
 Terminal 1 -- start the server, leave it running:
 ```
-./kvserver 9000 8 1024 500
+./kvserver 9000 8 1024 500 2>&1 | tee logs/server.txt
 ```
 
 You should see a line like:
@@ -41,7 +46,7 @@ Expected: `OK`, `VALUE v`, `BYE`. If that works, the server is up and the protoc
 Terminal 2 -- run the four benchmark cases and save each to its own file:
 ```
 for c in 1 4 16 64; do
-  ./bench_client 127.0.0.1 9000 $c 10000 90 | tee bench_c${c}.txt
+  ./bench_client 127.0.0.1 9000 $c 10000 90 2>&1 | tee logs/bench_c${c}.txt
 done
 ```
 
