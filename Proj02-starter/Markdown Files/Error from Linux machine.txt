@@ -1,0 +1,9 @@
+bash-5.1$ ./test_stages.sh 9000 
+bash: ./test_stages.sh: Permission denied
+bash-5.1$ ./test_client.sh 9000 
+bash: ./test_client.sh: Permission denied
+bash-5.1$ ls
+ CprE308_Project02_MT_Mini-KV.pdf  'Markdown Files'   bench_c16.txt   bench_c64.txt   bench_client.c   kvserver     logs         queue.c                 sweeper.c   test_client.sh
+ Makefile                           bench_c1.txt      bench_c4.txt    bench_client    kv.h             kvserver.c   protocol.c   server_1777868386.log   table.c     test_stages.sh
+bash-5.1$ ^C
+bash-5.1$ 
