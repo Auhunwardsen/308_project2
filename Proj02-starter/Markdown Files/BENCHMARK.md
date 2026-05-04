@@ -19,6 +19,12 @@ make all bench
 ./bench_client 127.0.0.1 9000 64 10000 90
 ```
 
+## Save output (one file per run)
+
+```
+./bench_client 127.0.0.1 9000 16 10000 90 | tee bench_$(date +%s).log
+```
+
 ## Results -- Throughput vs. concurrency (90% read / 10% write)
 
 | Clients | Total ops | Wall time (s) | Throughput (ops/sec) |
