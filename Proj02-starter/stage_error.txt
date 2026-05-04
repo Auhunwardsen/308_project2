@@ -1,0 +1,198 @@
+=== Stage 1: error paths ===
+
+=== Stage 2: parallel clients ===
+
+=== Stage 3: shared-key contention ===
+
+=== Stage 4: TTL sweeper ===
+
+
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help.Ncat: Try `--help' or man(1) ncat for more information, usage options and help.Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+ QUITTING.
+ QUITTING.
+nc: invalid option -- 'q'
+nc: invalid option -- 'q'
+nc: invalid option -- 'q'
+Ncat: Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+nc: invalid option -- 'q'
+nc: invalid option -- 'q'
+nc: invalid option -- 'q'
+Ncat: Ncat: Ncat: Try `--help' or man(1) ncat for more information, usage options and help.Try `--help' or man(1) ncat for more information, usage options and help.Try `--help' or man(1) ncat for more information, usage options and help.Ncat:  QUITTING.
+Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help.nc: invalid option -- 'q'
+Ncat:  QUITTING.
+ QUITTING.
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help.Ncat:  QUITTING.
+Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+Ncat: Ncat: Try `--help' or man(1) ncat for more information, usage options and help.Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+ QUITTING.
+ QUITTING.
+Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+ QUITTING.
+Try `--help' or man(1) ncat for more information, usage options and help.nc: invalid option -- 'q'
+ QUITTING.
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+ QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+ QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+
+
+bash-5.1$ ./test_stages.sh 9000 
+bash: ./test_stages.sh: Permission denied
+bash-5.1$ ./test_client.sh 9000 
+bash: ./test_client.sh: Permission denied
+bash-5.1$ ls
+ CprE308_Project02_MT_Mini-KV.pdf  'Markdown Files'   bench_c16.txt   bench_c64.txt   bench_client.c   kvserver     logs         queue.c                 sweeper.c   test_client.sh
+ Makefile                           bench_c1.txt      bench_c4.txt    bench_client    kv.h             kvserver.c   protocol.c   server_1777868386.log   table.c     test_stages.sh
+bash-5.1$ ^C
+bash-5.1$ git add .
+bash-5.1$ git commit -m "error"
+[main ff67e30] error
+ Committer: auhun47 <auhun47@linuxvdi-f25-50.ece.iastate.edu>
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 5 files changed, 17 insertions(+), 8 deletions(-)
+ create mode 100644 Proj02-starter/Markdown Files/Error from Linux machine.txt
+bash-5.1$ git push origin main
+Enumerating objects: 18, done.
+Counting objects: 100% (18/18), done.
+Delta compression using up to 4 threads
+Compressing objects: 100% (5/5), done.
+Writing objects: 100% (10/10), 1.07 KiB | 1.07 MiB/s, done.
+Total 10 (delta 1), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (1/1), completed with 1 local object.
+To https://github.com/Auhunwardsen/308_project2
+   2710f74..ff67e30  main -> main
+bash-5.1$ git pull
+remote: Enumerating objects: 9, done.
+remote: Counting objects: 100% (9/9), done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 5 (delta 2), reused 5 (delta 2), pack-reused 0 (from 0)
+Unpacking objects: 100% (5/5), 528 bytes | 11.00 KiB/s, done.
+From https://github.com/Auhunwardsen/308_project2
+   ff67e30..7f2dc02  main       -> origin/main
+Updating ff67e30..7f2dc02
+Fast-forward
+ Proj02-starter/Markdown Files/BENCHMARK.md | 2 ++
+ 1 file changed, 2 insertions(+)
+bash-5.1$ chmod +x test_client.sh test_stages.sh
+bash-5.1$ chmod +x test_client.sh test_stages.sh
+bash-5.1$ ./^Cst_stages.sh
+bash-5.1$ ./test_client.sh
+=== Smoke test against localhost:9000 ===
+
+--- PUT color red ---
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+--- GET color ---
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+--- GET missing ---
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+--- PUT temp 72 2   (TTL = 2s, Stage 4) ---
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+--- GET temp ---
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+--- (sleeping 3s for TTL to expire)
+--- GET temp  (expect NOT_FOUND in Stage 4) ---
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+--- DEL color ---
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
+--- STATS ---
+nc: invalid option -- 'q'
+Ncat: Try `--help' or man(1) ncat for more information, usage options and help. QUITTING.
