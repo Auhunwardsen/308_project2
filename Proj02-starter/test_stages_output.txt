@@ -245,3 +245,140 @@ STATS keys=1043 hits=752867 misses=12333 puts=85032 dels=1 active_conns=1 uptime
 BYE
 STATS keys=1023 hits=752867 misses=12333 puts=85032 dels=1 active_conns=1 uptime_s=106
 BYE
+=== Stage 1: error paths ===
+ERROR unknown command
+BYE
+ERROR bad PUT
+BYE
+ERROR unknown command
+BYE
+NOT_FOUND
+BYE
+
+=== Stage 2: parallel clients ===
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+VALUE v5
+BYE
+VALUE v3
+BYE
+VALUE v2
+BYE
+VALUE v8
+BYE
+VALUE v9
+BYE
+VALUE v1
+BYE
+VALUE v10
+BYE
+VALUE v7
+BYE
+VALUE v6
+BYE
+VALUE v4
+BYE
+STATS keys=1023 hits=2860014 misses=12337 puts=317913 dels=3 active_conns=1 uptime_s=895
+BYE
+
+=== Stage 3: shared-key contention ===
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+VALUE v6
+BYE
+VALUE v10
+BYE
+VALUE v20
+BYE
+
+=== Stage 4: TTL sweeper ===
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+OK
+BYE
+STATS keys=1033 hits=2860017 misses=12337 puts=317948 dels=3 active_conns=1 uptime_s=896
+BYE
+STATS keys=1023 hits=2860017 misses=12337 puts=317948 dels=3 active_conns=1 uptime_s=899
+BYE

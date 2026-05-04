@@ -1,0 +1,2 @@
+Time: 0.79 sec
+Throughput: 202807.39 ops/sec

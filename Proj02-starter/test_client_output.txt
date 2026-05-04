@@ -25,3 +25,30 @@ BYE
 --- STATS ---
 STATS keys=1023 hits=752869 misses=12335 puts=85034 dels=2 active_conns=1 uptime_s=140
 BYE
+=== Smoke test against localhost:9000 ===
+
+--- PUT color red ---
+OK
+BYE
+--- GET color ---
+VALUE red
+BYE
+--- GET missing ---
+NOT_FOUND
+BYE
+--- PUT temp 72 2   (TTL = 2s, Stage 4) ---
+OK
+BYE
+--- GET temp ---
+VALUE 72
+BYE
+--- (sleeping 3s for TTL to expire)
+--- GET temp  (expect NOT_FOUND in Stage 4) ---
+NOT_FOUND
+BYE
+--- DEL color ---
+OK
+BYE
+--- STATS ---
+STATS keys=1023 hits=2860004 misses=12337 puts=317903 dels=3 active_conns=1 uptime_s=893
+BYE
