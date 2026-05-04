@@ -4,7 +4,7 @@
 
 PORT=${1:-9000}
 
-send() { printf "%s\n" "$1" | nc -q 1 localhost "$PORT"; }
+send() { printf "%s\nQUIT\n" "$1" | nc localhost "$PORT"; }
 
 echo "=== Stage 1: error paths ==="
 send "GET"

@@ -15,8 +15,9 @@
 PORT=${1:-9000}
 
 send() {
-    # Send a command and print the reply. Uses nc with a short timeout.
-    printf "%s\n" "$1" | nc -q 1 localhost "$PORT"
+    # Send a command and print the reply. Append QUIT so the server closes
+    # the connection (works on both traditional nc and Ncat).
+    printf "%s\nQUIT\n" "$1" | nc localhost "$PORT"
 }
 
 echo "=== Smoke test against localhost:$PORT ==="
