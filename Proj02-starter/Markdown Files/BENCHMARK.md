@@ -10,6 +10,8 @@
 
 ## How to run
 
+chmod +x test_client.sh test_stages.sh `if not done already`
+
 Build:
 ```
 make all bench
