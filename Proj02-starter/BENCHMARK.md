@@ -88,3 +88,4 @@ Per doc: "start it, show concurrent clients, show STATS, show TTL expiry."
 3. Terminal 2: `./test_client.sh 9000` -- shows PUT/GET/DEL/STATS/TTL.
 4. Terminal 2: `./test_stages.sh 9000` -- shows parallel clients (Stage 2), shared-key contention (Stage 3), TTL sweeper (Stage 4 -- watch keys go from 1043 down to 1023 after the 3s sleep).
 5. Terminal 2: `./bench_client 127.0.0.1 9000 16 10000 90` -- shows the throughput number from BENCHMARK.md.
+6. Terminal 2: ` nc localhost 9000 run commands live `
