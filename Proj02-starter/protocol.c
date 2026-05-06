@@ -63,14 +63,14 @@ void handle_client(int conn_fd)
         {
             if (sscanf(line + 4, "%255s", key) != 1)
             {
-                dprintf(conn_fd, "ERROR bad GET\n");
+                dprintf(conn_fd, "S: ERROR bad GET\n");
             }
             else
             {
                 char out[MAX_VAL_LEN];
                 if (kv_get(key, out, sizeof(out)) == 0)
                 {
-                    dprintf(conn_fd, "VALUE %s\n", out);
+                    dprintf(conn_fd, "S: VALUE %s\n", out);
                 }
                 else
                 {
@@ -85,7 +85,7 @@ void handle_client(int conn_fd)
             int n = sscanf(line + 4, "%255s %255s %d", key, val, &ttl);
             if (n < 2)
             {
-                dprintf(conn_fd, "ERROR bad PUT\n");
+                dprintf(conn_fd, "S: ERROR bad PUT\n");
             }
             else
             {
@@ -100,7 +100,7 @@ void handle_client(int conn_fd)
         {
             if (sscanf(line + 4, "%255s", key) != 1)
             {
-                dprintf(conn_fd, "ERROR bad DEL\n");
+                dprintf(conn_fd, "S: ERROR bad DEL\n");
             }
             else
             {
@@ -137,7 +137,7 @@ void handle_client(int conn_fd)
         /* ---- anything else ---- */
         else if (line[0] != '\0')
         {
-            dprintf(conn_fd, "ERROR unknown command\n");
+            dprintf(conn_fd, "S: ERROR unknown command\n");
         }
     }
 

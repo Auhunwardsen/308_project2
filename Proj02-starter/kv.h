@@ -23,9 +23,9 @@
 #define MAX_LINE_LEN (MAX_KEY_LEN + MAX_VAL_LEN + 64) /* + command + ttl */
 
 /* Response strings. Each response is one line ending in '\n'. */
-#define RESP_OK "OK\n"
-#define RESP_BYE "BYE\n"
-#define RESP_NOTFOUND "NOT_FOUND\n"
+#define RESP_OK "S: OK\n"
+#define RESP_BYE "S: BYE\n"
+#define RESP_NOTFOUND "S: NOT_FOUND\n"
 
 /* -------- Your types go here -------------------------------------------- */
 
